@@ -9,8 +9,7 @@ import itertools
 
 from ..batch import Batch
 from ..dataset_base import DatasetBase
-
-
+from ..tcds_data import TEST_DATA, TRAIN_DATA
 one_hot: Callable[..., Tensor]
 AttributeValueObject: Sequence[int]
 
@@ -78,12 +77,12 @@ class AttributeValueDataModule(LightningDataModule):
         n_test_samples = int(len(data) * heldout_ratio)
 
         self.train_dataset = AttributeValueDataset(
-            objects=data[n_test_samples:],
+            objects=TRAIN_DATA,
             n_attributes=n_attributes,
             n_values=n_values,
         )
         self.heldout_dataset = AttributeValueDataset(
-            objects=data[:n_test_samples],
+            objects=TEST_DATA,
             n_attributes=n_attributes,
             n_values=n_values,
         )
