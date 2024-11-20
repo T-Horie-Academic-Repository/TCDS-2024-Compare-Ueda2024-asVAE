@@ -3,7 +3,7 @@
     --max_len 32 \
     --fix_message_length false \
     --n_epochs 20000 \
-    --batch_size 8192 \
+    --batch_size 2048 \
     --sender_cell_type gru \
     --sender_hidden_size 512 \
     --sender_embedding_dim 32 \
@@ -14,9 +14,9 @@
     --receiver_layer_norm true \
     --receiver_dropout_alpha 1e-3 \
     --baseline_type baseline-from-sender \
-    --beta_scheduler_type rewo
-    --beta_rewo_communication_loss constraint 0.3 \
+    --beta_scheduler_type rewo \
+    --beta_rewo_communication_loss_constraint 0.3 \
     --prior_type receiver \
-    --n_attributes ${N_ATTRIBUTES} \
-    --n_values ${N_VALUES} \
-    --random_seed ${RANDOM_SEED}
+    --n_attributes 4 \
+    --n_values 4 \
+    --random_seed 1
