@@ -22,8 +22,5 @@ TRAIN_DATA.extend(pd.read_csv("../datas/train_extended_zs_70.csv").values.tolist
 # ]
 TEST_DATA = pd.read_csv("../datas/test_zs_10.csv").values.tolist()
 
-print(TRAIN_DATA)
-print(TEST_DATA)
-
 assert len(TRAIN_DATA) == 100 ## 仮コード
 assert len(TEST_DATA) == 10 ## 仮コード
