@@ -7,6 +7,8 @@ from collections import defaultdict
 import json
 import ndjson
 
+from tqdm import tqdm
+
 from ..data import Batch
 from ..model.game import GameBase
 
@@ -24,6 +26,7 @@ class DumpLanguage(Callback):
         self.beam_sizes = beam_sizes
 
         self.meaning_saved_flag = False
+        self.pbar = tqdm(desc="training", leave=False, total=20000)
 
     @classmethod
     def make_common_save_file_path(
@@ -138,6 +141,10 @@ class DumpLanguage(Callback):
             return
 
         self.dump(game=pl_module, dataloaders=dataloaders, step="last")
+        self.pbar.close()
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        self.pbar.update(1)
 
     ## added for TCDS-2024
     def on_test_end(self, trainer, pl_module):
