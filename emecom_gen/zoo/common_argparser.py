@@ -135,6 +135,7 @@ class CommonArgumentParser(Tap):
         self.add_argument("--sender_symbol_prediction_layer_eos_type", type=to_eos_type)
         self.add_argument("--receiver_symbol_prediction_layer_eos_type", type=to_eos_type)
         self.add_argument("--track_grad_norm", type=to_track_grad_norm)
+        self.add_argument("--exp_id", type=int)
 
     def __init__(
         self,

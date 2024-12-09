@@ -38,6 +38,8 @@ class ArgumentParser(CommonArgumentParser):
     compute_topsim: bool = False
     compute_language_similarity: bool = False
     compute_harris_based_metrics: bool = False
+    num_char_sorts: int = 0
+    exp_id: int = 0
 
     def process_args(self) -> None:
         if self.experiment_version == "":
@@ -135,6 +137,8 @@ def main():
         random_seed=args.random_seed,
         num_workers=args.num_workers,
         heldout_ratio=args.heldout_ratio,
+        num_char_sorts=args.vocab_size - 1,
+        exp_id=args.exp_id,
     )
 
     logger.info("Creat Model")
@@ -369,7 +373,20 @@ def main():
     torch.set_float32_matmul_precision("high")
     trainer.fit(model=model, datamodule=datamodule)
     # if args.heldout_ratio > 0: ## in TCDS 2024, heldout_ratio is always 0 
-    trainer.test(model=model, datamodule=datamodule)
+    for pred_id in range(5):
+        datamodule_pred = AttributeValueDataModule(
+            n_attributes=args.n_attributes,
+            n_values=args.n_values,
+            batch_size=args.batch_size,
+            num_batches_per_epoch=args.accumulate_grad_batches,
+            random_seed=args.random_seed,
+            num_workers=args.num_workers,
+            heldout_ratio=args.heldout_ratio,
+            num_char_sorts=args.vocab_size - 1,
+            exp_id=args.exp_id,
+            pred_id=pred_id,
+        )
+        trainer.test(model=model, datamodule=datamodule_pred)
 
 
 if __name__ == "__main__":

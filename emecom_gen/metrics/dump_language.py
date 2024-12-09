@@ -33,10 +33,10 @@ class DumpLanguage(Callback):
         cls,
         save_dir: Path,
         dataloader_idx: int,
-        is_test: bool = False,
+        file_prefix: str|None = None,
     ):
-        if is_test:
-            return save_dir / f"language_dataloader_idx_{dataloader_idx}_test.jsonl"
+        if file_prefix is not None:
+            return save_dir / f"language_dataloader_idx_{dataloader_idx}_{file_prefix}.jsonl"
         return save_dir / f"language_dataloader_idx_{dataloader_idx}.jsonl"
 
     @classmethod
@@ -60,10 +60,11 @@ class DumpLanguage(Callback):
         game: GameBase,
         dataloaders: list[DataLoader[Batch]],
         step: int | Literal["last"] = "last",
-        is_test: bool = False,
+        file_prefix: str | None = None,
     ) -> None:
         game_training_state = game.training
         game.eval()
+
 
         for dataloader_idx, dataloader in enumerate(dataloaders):
             if not self.meaning_saved_flag:
@@ -86,7 +87,7 @@ class DumpLanguage(Callback):
                             else:
                                 meanings.extend(batch.input_data_path)
                     with self.make_common_save_file_path(
-                        self.save_dir, dataloader_idx, is_test=is_test
+                        self.save_dir, dataloader_idx, file_prefix=file_prefix
                     ).open("w") as f:
                         ndjson_writer = ndjson.writer(f)
                         ndjson_writer.writerow(
@@ -108,7 +109,7 @@ class DumpLanguage(Callback):
 
             for sender_idx, beam_size in messages.keys():
                 with self.make_common_save_file_path(
-                    self.save_dir, dataloader_idx, is_test=is_test
+                    self.save_dir, dataloader_idx, file_prefix=file_prefix
                 ).open("a") as f:
                     ndjson_writer = ndjson.writer(f)
                     ndjson_writer.writerow(
@@ -146,7 +147,7 @@ class DumpLanguage(Callback):
     def on_train_epoch_end(self, trainer, pl_module):
         self.pbar.update(1)
 
-    ## added for TCDS-2024
+    ## added for TCDS-2024 ############################################################################################################
     def on_test_end(self, trainer, pl_module):
         """
         Dumps the language data at the end of the test.
@@ -157,5 +158,15 @@ class DumpLanguage(Callback):
         if dataloaders is None:
             return
 
-        self.dump(game=pl_module, dataloaders=dataloaders, step="test", is_test=True)
+        file_prefix = (
+            f"test-{trainer.datamodule.num_char_sorts:02}_"
+            f"exp{trainer.datamodule.exp_id:03}_predict{trainer.datamodule.pred_id:03}"
+        )
+
+        self.dump(
+            game=pl_module,
+            dataloaders=dataloaders,
+            step="test",
+            file_prefix=file_prefix,
+        )
 

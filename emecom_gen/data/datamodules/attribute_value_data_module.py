@@ -9,7 +9,7 @@ import itertools
 
 from ..batch import Batch
 from ..dataset_base import DatasetBase
-from ..tcds_data import TEST_DATA, TRAIN_DATA
+from ..tcds_data import get_test_data, TRAIN_DATA
 one_hot: Callable[..., Tensor]
 AttributeValueObject: Sequence[int]
 
@@ -55,6 +55,9 @@ class AttributeValueDataModule(LightningDataModule):
         heldout_ratio: float = 0,
         random_seed: Optional[int] = None,
         num_workers: int = 4,
+        num_char_sorts: int = 0,
+        exp_id: int = 0,
+        pred_id: int = 0,
     ) -> None:
         super().__init__()
         assert n_attributes > 0
@@ -71,6 +74,10 @@ class AttributeValueDataModule(LightningDataModule):
 
         self.generator = None if random_seed is None else Generator().manual_seed(random_seed)
 
+        self.num_char_sorts = num_char_sorts
+        self.exp_id = exp_id
+        self.pred_id = pred_id
+
         data = list(itertools.product(range(n_values), repeat=n_attributes))
         RandomState(random_seed).shuffle(data)
 
@@ -82,7 +89,11 @@ class AttributeValueDataModule(LightningDataModule):
             n_values=n_values,
         )
         self.heldout_dataset = AttributeValueDataset(
-            objects=TEST_DATA,
+            objects=get_test_data(
+                num_char_sorts=num_char_sorts,
+                exp_id=exp_id,
+                pred_id=pred_id,
+            ),
             n_attributes=n_attributes,
             n_values=n_values,
         )
