@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from typing import Literal, Optional, Any
 from collections import defaultdict
 import json
+import ndjson
 
 from ..data import Batch
 from ..model.game import GameBase
@@ -29,7 +30,10 @@ class DumpLanguage(Callback):
         cls,
         save_dir: Path,
         dataloader_idx: int,
+        is_test: bool = False,
     ):
+        if is_test:
+            return save_dir / f"language_dataloader_idx_{dataloader_idx}_test.jsonl"
         return save_dir / f"language_dataloader_idx_{dataloader_idx}.jsonl"
 
     @classmethod
@@ -53,6 +57,7 @@ class DumpLanguage(Callback):
         game: GameBase,
         dataloaders: list[DataLoader[Batch]],
         step: int | Literal["last"] = "last",
+        is_test: bool = False,
     ) -> None:
         game_training_state = game.training
         game.eval()
@@ -77,10 +82,12 @@ class DumpLanguage(Callback):
                                 meanings.append(batch.input_data_path)
                             else:
                                 meanings.extend(batch.input_data_path)
-                    with self.make_common_save_file_path(self.save_dir, dataloader_idx).open("w") as f:
-                        print(
-                            json.dumps({self.make_common_json_key_name("meaning", step=step): meanings}),
-                            file=f,
+                    with self.make_common_save_file_path(
+                        self.save_dir, dataloader_idx, is_test=is_test
+                    ).open("w") as f:
+                        ndjson_writer = ndjson.writer(f)
+                        ndjson_writer.writerow(
+                            {self.make_common_json_key_name("meaning", step=step): meanings}
                         )
 
             messages: defaultdict[tuple[int, int], list[list[int]]] = defaultdict(list)
@@ -97,25 +104,25 @@ class DumpLanguage(Callback):
                         message_lengths[sender_idx, beam_size].extend(sender_output.message_length.tolist())
 
             for sender_idx, beam_size in messages.keys():
-                with self.make_common_save_file_path(self.save_dir, dataloader_idx).open("a") as f:
-                    print(
-                        json.dumps(
-                            {
-                                self.make_common_json_key_name(
-                                    "message",
-                                    step=step,
-                                    sender_idx=sender_idx,
-                                    beam_size=beam_size,
-                                ): messages[sender_idx, beam_size],
-                                self.make_common_json_key_name(
-                                    "message_length",
-                                    step=step,
-                                    sender_idx=sender_idx,
-                                    beam_size=beam_size,
-                                ): message_lengths[sender_idx, beam_size],
-                            }
-                        ),
-                        file=f,
+                with self.make_common_save_file_path(
+                    self.save_dir, dataloader_idx, is_test=is_test
+                ).open("a") as f:
+                    ndjson_writer = ndjson.writer(f)
+                    ndjson_writer.writerow(
+                        {
+                            self.make_common_json_key_name(
+                                "message",
+                                step=step,
+                                sender_idx=sender_idx,
+                                beam_size=beam_size,
+                            ): messages[sender_idx, beam_size],
+                            self.make_common_json_key_name(
+                                "message_length",
+                                step=step,
+                                sender_idx=sender_idx,
+                                beam_size=beam_size,
+                            ): message_lengths[sender_idx, beam_size],
+                        }
                     )
 
         game.train(game_training_state)
@@ -131,3 +138,17 @@ class DumpLanguage(Callback):
             return
 
         self.dump(game=pl_module, dataloaders=dataloaders, step="last")
+
+    ## added for TCDS-2024
+    def on_test_end(self, trainer, pl_module):
+        """
+        Dumps the language data at the end of the test.
+        The format of the dumped data is the same as the one in the fit phase.
+        """
+        self.meaning_saved_flag = False
+        dataloaders: Optional[list[DataLoader[Batch]]] = trainer.test_dataloaders
+        if dataloaders is None:
+            return
+
+        self.dump(game=pl_module, dataloaders=dataloaders, step="test", is_test=True)
+
