@@ -2,8 +2,8 @@
     --vocab_size 9 \
     --max_len 32 \
     --fix_message_length false \
-    --n_epochs 20000 \
-    --batch_size 2048 \
+    --n_epochs 400 \
+    --batch_size 4096 \
     --sender_cell_type gru \
     --sender_hidden_size 512 \
     --sender_embedding_dim 32 \
@@ -19,4 +19,5 @@
     --prior_type receiver \
     --n_attributes 4 \
     --n_values 4 \
-    --random_seed 1
+    --random_seed 1 \
+    --exp_id 0

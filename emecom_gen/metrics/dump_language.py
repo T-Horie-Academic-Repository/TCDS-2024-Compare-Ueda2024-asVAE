@@ -10,6 +10,7 @@ import ndjson
 from tqdm import tqdm
 
 from ..data import Batch
+from ..data.tcds_data import tidyup_receiver_output
 from ..model.game import GameBase
 
 
@@ -27,6 +28,7 @@ class DumpLanguage(Callback):
 
         self.meaning_saved_flag = False
         self.pbar = tqdm(desc="training", leave=False, total=20000)
+        self.pbar_aux = tqdm(desc="log-data", leave=False)
 
     @classmethod
     def make_common_save_file_path(
@@ -61,7 +63,11 @@ class DumpLanguage(Callback):
         dataloaders: list[DataLoader[Batch]],
         step: int | Literal["last"] = "last",
         file_prefix: str | None = None,
+        n_attributes: int = 4,
+        n_values: int = 4,
     ) -> None:
+        """ output the language data to the jsonl file.
+        """      
         game_training_state = game.training
         game.eval()
 
@@ -71,6 +77,8 @@ class DumpLanguage(Callback):
                 self.meaning_saved_flag = True
 
                 meanings: list[Any] = []
+                
+                ## extraction of input data (as meaning)
                 for batch in dataloader:
                     batch: Batch
                     match self.meaning_type:
@@ -91,23 +99,44 @@ class DumpLanguage(Callback):
                     ).open("w") as f:
                         ndjson_writer = ndjson.writer(f)
                         ndjson_writer.writerow(
-                            {self.make_common_json_key_name("meaning", step=step): meanings}
+                            {"meaning": meanings}
                         )
+                        # ndjson_writer.writerow(
+                        #     {self.make_common_json_key_name("estimated_meaning", step=step): meanings}
+                        # )
 
             messages: defaultdict[tuple[int, int], list[list[int]]] = defaultdict(list)
             message_lengths: defaultdict[tuple[int, int], list[int]] = defaultdict(list)
+            message_masks: defaultdict[tuple[int, int], list[list[int]]] = defaultdict(list)
+            estimated_meanings: defaultdict[tuple[int, int], list[int]] = defaultdict(list)
+
 
             for batch in dataloader:
                 batch: Batch = batch.to(game.device)
-                for sender_idx, sender in list(enumerate(game.senders)):
+                for agentspair_idx, (sender, receiver) in enumerate(zip(game.senders, game.receivers)):
                     for beam_size in self.beam_sizes:
                         sender_output = sender.forward(batch, beam_size=beam_size)
-                        messages[sender_idx, beam_size].extend(
+                        messages[agentspair_idx, beam_size].extend(
                             (sender_output.message * sender_output.message_mask.long()).tolist()
                         )
-                        message_lengths[sender_idx, beam_size].extend(sender_output.message_length.tolist())
+                        message_lengths[agentspair_idx, beam_size].extend(sender_output.message_length.tolist())
+                        message_masks[agentspair_idx, beam_size].extend(sender_output.message_mask.tolist())
+                
+                        estimated_meanings[agentspair_idx, beam_size].extend(
+                            tidyup_receiver_output(
+                                n_attributes,
+                                n_values,
+                                receiver.forward(
+                                    message=sender_output.message,
+                                    message_length=sender_output.message_length,
+                                    message_mask=sender_output.message_mask,
+                                    candidates=batch.candidates,
+                                ).last_logits.tolist()
+                            ).tolist()
+                        )
 
-            for sender_idx, beam_size in messages.keys():
+
+            for agentspair_idx, beam_size in messages.keys():
                 with self.make_common_save_file_path(
                     self.save_dir, dataloader_idx, file_prefix=file_prefix
                 ).open("a") as f:
@@ -117,15 +146,16 @@ class DumpLanguage(Callback):
                             self.make_common_json_key_name(
                                 "message",
                                 step=step,
-                                sender_idx=sender_idx,
+                                sender_idx=agentspair_idx,
                                 beam_size=beam_size,
-                            ): messages[sender_idx, beam_size],
+                            ): messages[agentspair_idx, beam_size],
                             self.make_common_json_key_name(
                                 "message_length",
                                 step=step,
-                                sender_idx=sender_idx,
+                                sender_idx=agentspair_idx,
                                 beam_size=beam_size,
-                            ): message_lengths[sender_idx, beam_size],
+                            ): message_lengths[agentspair_idx, beam_size],
+                            "estimated_meaning": estimated_meanings[agentspair_idx, beam_size],
                         }
                     )
 
@@ -144,10 +174,31 @@ class DumpLanguage(Callback):
         self.dump(game=pl_module, dataloaders=dataloaders, step="last")
         self.pbar.close()
 
-    def on_train_epoch_end(self, trainer, pl_module):
-        self.pbar.update(1)
+
+
 
     ## added for TCDS-2024 ############################################################################################################
+    def on_train_epoch_end(self, trainer, pl_module: GameBase):
+        """ Called when the train epoch ends.
+        
+        This method is used for showing progress.
+        
+        """
+        # game_loss = pl_module.loss
+        self.pbar.update(1)
+        self.pbar_aux.set_postfix_str(f"loss: {pl_module.loss:.4f}")
+
+    # def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
+    #     """ Called when the train batch ends.
+        
+    #     This method is used for showing the loss value of the epoch.
+        
+    #     """
+    #     if "loss" in outputs:
+    #         print(outputs["loss"].item())  # loss をリストに保存
+    #     else:
+    #         print("loss is not in outputs")
+
     def on_test_end(self, trainer, pl_module):
         """
         Dumps the language data at the end of the test.
@@ -168,5 +219,7 @@ class DumpLanguage(Callback):
             dataloaders=dataloaders,
             step="test",
             file_prefix=file_prefix,
+            n_attributes = trainer.datamodule.n_attributes,
+            n_values = trainer.datamodule.n_values,
         )
 

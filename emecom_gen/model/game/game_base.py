@@ -87,6 +87,9 @@ class GameBase(LightningModule):
             if isinstance(prior, Module):
                 self.add_module(f"{prior.__class__.__name__}[{i}]", prior)
 
+        ## Added for TCDDS-2024; logging losses
+        self.loss: float = 0.0
+
     def __call__(self, batch: Batch) -> GameOutput:
         return self.forward(batch)
 
@@ -228,6 +231,9 @@ class GameBase(LightningModule):
                 game_output.make_log_dict(prefix="train_"),
                 batch_size=batch.batch_size,
             )
+        
+        ## Added for TCDDS-2024; logging losses
+        self.loss = game_output.loss.mean()
 
     def on_train_batch_end(
         self,
@@ -236,7 +242,7 @@ class GameBase(LightningModule):
         batch_idx: int,
     ) -> None:
         if batch_idx % self.accumulate_grad_batches == self.accumulate_grad_batches - 1:
-            self.batch_step += 1
+            self.batch_step += 1       
 
     def validation_step(
         self,
