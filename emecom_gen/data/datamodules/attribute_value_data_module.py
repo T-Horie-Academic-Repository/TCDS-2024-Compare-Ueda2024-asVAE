@@ -78,10 +78,10 @@ class AttributeValueDataModule(LightningDataModule):
         self.exp_id = exp_id
         self.pred_id = pred_id
 
-        data = list(itertools.product(range(n_values), repeat=n_attributes))
-        RandomState(random_seed).shuffle(data)
+        # data = list(itertools.product(range(n_values), repeat=n_attributes))
+        # RandomState(random_seed).shuffle(data)
 
-        n_test_samples = int(len(data) * heldout_ratio)
+        # n_test_samples = int(len(data) * heldout_ratio)
 
         self.train_dataset = AttributeValueDataset(
             objects=TRAIN_DATA,

@@ -319,6 +319,7 @@ def main():
         DumpLanguage(
             save_dir=args.save_dir / args.experiment_name / args.experiment_version,
             meaning_type="target_label",
+            beam_sizes=(1,),
         ),
     ]
 
