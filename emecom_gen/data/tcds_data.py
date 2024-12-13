@@ -39,7 +39,6 @@ def tidyup_receiver_output(n_attributes, n_values, receiver_output)->npt.NDArray
     """
     tidyup the receiver output to the shape of (n_outputs, n_attributes, n_values)
     """
-    print(np.shape(receiver_output))
     receiver_output_array = np.zeros((len(receiver_output), n_attributes), dtype=int)
     for output_id, receiver_output_i in enumerate(receiver_output):
         receiver_output_i = np.array(receiver_output_i)
