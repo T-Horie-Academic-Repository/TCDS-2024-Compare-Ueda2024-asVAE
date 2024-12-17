@@ -191,7 +191,6 @@ class DumpLanguage(Callback):
                 acc: The ratio of rows where all elements match between a and b.
                 acc_or: The ratio of elements that match between a and b.
         """
-        tqdm.write(f"array1: {array1[0:5]}, array2: {array2[0:5]}")
         if array1.shape != array2.shape:
             raise ValueError("Arrays must have the same shape.")
 
@@ -258,20 +257,20 @@ class DumpLanguage(Callback):
         self.pbar.update(1)
         self.pbar_aux.update(1)
         
-        meanings, outputs = self.dump(
-            game=pl_module,
-            dataloaders=[trainer.train_dataloader],
-            file_prefix=None,
-            n_attributes = trainer.datamodule.n_attributes,
-            n_values = trainer.datamodule.n_values,
-        )
+        # meanings, outputs = self.dump(
+        #     game=pl_module,
+        #     dataloaders=[trainer.train_dataloader],
+        #     file_prefix=None,
+        #     n_attributes = trainer.datamodule.n_attributes,
+        #     n_values = trainer.datamodule.n_values,
+        # )
 
-        acc, acc_or = self.calculate_accuracy(
-            np.array(outputs[0]["estimated_meaning"]),
-            np.array(meanings["meaning"]),
-        )
+        # acc, acc_or = self.calculate_accuracy(
+        #     np.array(outputs[0]["estimated_meaning"]),
+        #     np.array(meanings["meaning"]),
+        # )
         
-        progeress_str = f"loss: {pl_module.loss:.6f}, acc: {acc:.6f}, acc_or: {acc_or:.6f}"
+        progeress_str = f"loss: {pl_module.loss:.6f}" #, acc: {acc:.6f}, acc_or: {acc_or:.6f}"
         self.pbar_aux.set_postfix_str(progeress_str)
 
         if self.pbar.n % 10 == 0:
