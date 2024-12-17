@@ -30,6 +30,7 @@ from ...metrics import TopographicSimilarity, DumpLanguage, HarrisSchemeBasedMet
 from ..common_argparser import CommonArgumentParser
 from .additional_archs import AttributeValueEncoder, AttributeValueDecoder
 
+NUM_PREDICTIONS = 10 ## TCDS-2024; Number of predictions
 
 class ArgumentParser(CommonArgumentParser):
     n_attributes: int = 2  # Number of attributes.
@@ -374,7 +375,7 @@ def main():
     torch.set_float32_matmul_precision("high")
     trainer.fit(model=model, datamodule=datamodule)
     # if args.heldout_ratio > 0: ## in TCDS 2024, heldout_ratio is always 0 
-    for pred_id in range(5):
+    for pred_id in range(NUM_PREDICTIONS):
         datamodule_pred = AttributeValueDataModule(
             n_attributes=args.n_attributes,
             n_values=args.n_values,
