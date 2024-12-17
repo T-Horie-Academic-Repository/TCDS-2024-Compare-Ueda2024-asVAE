@@ -3,7 +3,7 @@
     --max_len 32 \
     --fix_message_length false \
     --n_epochs 400 \
-    --batch_size 4096 \
+    --batch_size 1024 \
     --sender_cell_type gru \
     --sender_hidden_size 512 \
     --sender_embedding_dim 32 \
