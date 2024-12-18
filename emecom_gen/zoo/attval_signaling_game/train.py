@@ -5,6 +5,7 @@ from logzero import logger
 from typing import Sequence, Literal
 import json
 import torch
+import wandb
 
 from ...data import AttributeValueDataModule
 from ...model.sender import RnnReinforceSender
@@ -122,6 +123,23 @@ def main():
 
     seed_everything(args.random_seed)
     torch.use_deterministic_algorithms(True)
+
+    ## Add TCDS-2024; record the hyperparameters and run metadata
+    wandb_train = wandb.init(
+        # set the wandb project where this run will be logged
+        project="TCDS2024-compare-Ueda2024-train",
+
+        # track hyperparameters and run metadata
+        config={
+            "learning_rate_sender": args.sender_lr,
+            "learning_rate_receiver": args.receiver_lr,
+            "batch_size": args.batch_size,
+            "epochs": args.n_epochs,
+            "vocab_size": args.vocab_size,
+            "random_seed": args.random_seed,
+            "exp_id": args.exp_id,
+        }
+    )
 
     args_save_path = args.save_dir / args.experiment_name / args.experiment_version / "args.json"
     args_save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -375,6 +393,24 @@ def main():
     torch.set_float32_matmul_precision("high")
     trainer.fit(model=model, datamodule=datamodule)
     # if args.heldout_ratio > 0: ## in TCDS 2024, heldout_ratio is always 0 
+
+    wandb_train.finish()
+    wandb_test = wandb.init(
+        # set the wandb project where this run will be logged
+        project="TCDS2024-compare-Ueda2024-test",
+
+        # track hyperparameters and run metadata
+        config={
+            "learning_rate_sender": args.sender_lr,
+            "learning_rate_receiver": args.receiver_lr,
+            "batch_size": args.batch_size,
+            "epochs": args.n_epochs,
+            "vocab_size": args.vocab_size,
+            "random_seed": args.random_seed,
+            "exp_id": args.exp_id,
+        }
+    )
+
     for pred_id in range(NUM_PREDICTIONS):
         datamodule_pred = AttributeValueDataModule(
             n_attributes=args.n_attributes,

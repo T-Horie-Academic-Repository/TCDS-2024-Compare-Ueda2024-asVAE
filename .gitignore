@@ -1,2 +1,3 @@
 *.pyc
 save_dir/**
+wandb/

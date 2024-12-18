@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from typing import Literal, Optional, Any
 from collections import defaultdict
 import ndjson
+import wandb
 
 import numpy as np
 from tqdm import tqdm
@@ -175,6 +176,12 @@ class DumpLanguage(Callback):
                     ndjson_writer = ndjson.writer(f)
                     ndjson_writer.writerow(dumped_result[-1])
 
+            wandb.log({
+                "pred_id": dataloader_idx,
+                "messages": messages[agentspair_idx, 1],
+                "receiver_output": estimated_meanings[agentspair_idx, 1],
+            })
+
         game.train(game_training_state)
         return {"meaning": meanings}, dumped_result
 
@@ -272,8 +279,9 @@ class DumpLanguage(Callback):
         
         progeress_str = f"loss: {pl_module.loss:.6f}" #, acc: {acc:.6f}, acc_or: {acc_or:.6f}"
         self.pbar_aux.set_postfix_str(progeress_str)
+        wandb.log({"loss": pl_module.loss})
 
-        if self.pbar.n % 10 == 0:
+        if self.pbar.n == 1:
             tqdm.write(progeress_str)
  
 

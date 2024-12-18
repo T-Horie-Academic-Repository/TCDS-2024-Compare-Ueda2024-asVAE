@@ -2,7 +2,7 @@
     --vocab_size 9 \
     --max_len 32 \
     --fix_message_length false \
-    --n_epochs 400 \
+    --n_epochs 10 \
     --batch_size 1024 \
     --sender_cell_type gru \
     --sender_hidden_size 512 \
