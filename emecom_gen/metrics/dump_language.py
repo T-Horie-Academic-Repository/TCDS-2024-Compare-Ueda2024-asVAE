@@ -277,9 +277,12 @@ class DumpLanguage(Callback):
         #     np.array(meanings["meaning"]),
         # )
         
-        progeress_str = f"loss: {pl_module.loss:.6f}" #, acc: {acc:.6f}, acc_or: {acc_or:.6f}"
+        progeress_str = f"loss: {pl_module.loss:.6f}, acc: {pl_module.acc:.6f}" #, acc_or: {acc_or:.6f}"
         self.pbar_aux.set_postfix_str(progeress_str)
-        wandb.log({"loss": pl_module.loss})
+        wandb.log({
+            "loss": pl_module.loss,
+            "acc": pl_module.acc,
+        })
 
         if self.pbar.n == 1:
             tqdm.write(progeress_str)

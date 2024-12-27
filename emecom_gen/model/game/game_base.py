@@ -89,6 +89,7 @@ class GameBase(LightningModule):
 
         ## Added for TCDDS-2024; logging losses
         self.loss: float = 0.0
+        self.acc: float = 0.0
 
     def __call__(self, batch: Batch) -> GameOutput:
         return self.forward(batch)
@@ -234,6 +235,7 @@ class GameBase(LightningModule):
         
         ## Added for TCDDS-2024; logging losses
         self.loss = game_output.loss.mean()
+        self.acc = game_output.acc.mean()
 
     def on_train_batch_end(
         self,

@@ -1,9 +1,13 @@
+for j in 1024 512 256 128 64; do # batch_size
+for k in 3 5 9 17; do # vocab_size
+for l in 0.01 0.001 0.0001 0.00001; do # learning rate
+for i in 10 20 30; do # 3 seeds
 /root/.local/bin/poetry run python -m emecom_gen.zoo.attval_signaling_game.train \
-    --vocab_size 9 \
+    --vocab_size $k \
     --max_len 32 \
     --fix_message_length false \
-    --n_epochs 200 \
-    --batch_size 1024 \
+    --n_epochs 2000 \
+    --batch_size $j \
     --sender_cell_type gru \
     --sender_hidden_size 512 \
     --sender_embedding_dim 32 \
@@ -19,5 +23,11 @@
     --prior_type receiver \
     --n_attributes 4 \
     --n_values 4 \
-    --random_seed 1 \
-    --exp_id 0
+    --random_seed $i \
+    --exp_id 0 \
+    --sender_lr $l \
+    --receiver_lr $l
+done
+done
+done
+done

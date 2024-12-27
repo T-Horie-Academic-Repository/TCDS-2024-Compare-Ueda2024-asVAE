@@ -127,7 +127,7 @@ def main():
     ## Add TCDS-2024; record the hyperparameters and run metadata
     wandb_train = wandb.init(
         # set the wandb project where this run will be logged
-        project="TCDS2024-compare-Ueda2024-train",
+        project="TCDS2024-compare-Ueda2024-train-grid",
 
         # track hyperparameters and run metadata
         config={
@@ -397,7 +397,7 @@ def main():
     wandb_train.finish()
     wandb_test = wandb.init(
         # set the wandb project where this run will be logged
-        project="TCDS2024-compare-Ueda2024-test",
+        project="TCDS2024-compare-Ueda2024-test-grid",
 
         # track hyperparameters and run metadata
         config={
