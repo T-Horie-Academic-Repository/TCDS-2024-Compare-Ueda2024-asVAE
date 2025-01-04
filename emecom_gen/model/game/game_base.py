@@ -237,6 +237,8 @@ class GameBase(LightningModule):
             )
         
         ## Added for TCDDS-2024; logging losses
+        self.loss = game_output.loss.mean()
+        self.acc = game_output.acc.mean()
         return {
             "loss": game_output.loss.mean(),
             "acc": game_output.acc.mean(),
