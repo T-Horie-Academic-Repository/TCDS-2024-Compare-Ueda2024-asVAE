@@ -9,7 +9,7 @@ import itertools
 
 from ..batch import Batch
 from ..dataset_base import DatasetBase
-from ..tcds_data import get_test_data, TRAIN_DATA
+from ..tcds_data import get_test_data, TRAIN_DATA, VALID_DATA
 one_hot: Callable[..., Tensor]
 AttributeValueObject: Sequence[int]
 
@@ -88,6 +88,12 @@ class AttributeValueDataModule(LightningDataModule):
             n_attributes=n_attributes,
             n_values=n_values,
         )
+        self.valid_dataset = AttributeValueDataset(
+            objects=VALID_DATA,
+            n_attributes=n_attributes,
+            n_values=n_values,
+        )
+        
         self.heldout_dataset = AttributeValueDataset(
             objects=get_test_data(
                 num_char_sorts=num_char_sorts,
@@ -121,7 +127,7 @@ class AttributeValueDataModule(LightningDataModule):
 
     def val_dataloader(self) -> DataLoader[Batch]:
         return DataLoader(
-            dataset=self.train_dataset,
+            dataset=self.valid_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             collate_fn=Batch.collate_fn,

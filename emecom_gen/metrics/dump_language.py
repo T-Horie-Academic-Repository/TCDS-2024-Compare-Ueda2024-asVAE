@@ -279,14 +279,25 @@ class DumpLanguage(Callback):
         
         progeress_str = f"loss: {pl_module.loss:.6f}, acc: {pl_module.acc:.6f}" #, acc_or: {acc_or:.6f}"
         self.pbar_aux.set_postfix_str(progeress_str)
-        wandb.log({
-            "loss": pl_module.loss,
-            "acc": pl_module.acc,
-        })
+        # wandb.log({
+        #     "loss": pl_module.loss,
+        #     "acc": pl_module.acc,
+        # })
 
         if self.pbar.n == 1:
             tqdm.write(progeress_str)
  
+    def on_validation_epoch_end(self, trainer, pl_module: GameBase):
+        """ Called when the train epoch ends.
+        
+        This method is used for showing progress.
+        
+        """
+        # wandb.log({
+        #     "valid_loss": pl_module.loss,
+        #     "valid_acc": pl_module.acc,
+        # })
+
 
     # def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
     #     """ Called when the train batch ends.

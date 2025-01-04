@@ -6,6 +6,9 @@ from torch.optim.lr_scheduler import LambdaLR
 from transformers import get_constant_schedule_with_warmup
 import torch
 
+import numpy as np
+import wandb
+
 from ...data.batch import Batch
 from ..sender import SenderBase
 from ..receiver import ReceiverBase, ReceiverOutput
@@ -234,8 +237,13 @@ class GameBase(LightningModule):
             )
         
         ## Added for TCDDS-2024; logging losses
-        self.loss = game_output.loss.mean()
-        self.acc = game_output.acc.mean()
+        return {
+            "loss": game_output.loss.mean(),
+            "acc": game_output.acc.mean(),
+        }
+
+    def training_epoch_end(self, outputs):
+        wandb.log(outputs[0])
 
     def on_train_batch_end(
         self,
@@ -252,6 +260,9 @@ class GameBase(LightningModule):
         *args: Any,
         **kwargs: Any,
     ) -> None:
+        
+        loss_list = []
+        acc_list = []
         for sender_idx in range(len(self.senders)):
             for receiver_idx in range(len(self.receivers)):
                 game_output = self.forward(
@@ -266,6 +277,16 @@ class GameBase(LightningModule):
                     ),
                     batch_size=batch.batch_size,
                 )
+                
+                loss_list.append(game_output.loss.mean().cpu().detach().numpy())
+                acc_list.append(game_output.acc.mean().cpu().detach().numpy())
+
+        ## Added for TCDDS-2024; logging losses
+        return [np.mean(loss_list), np.mean(acc_list)]
+
+    def validation_epoch_end(self, outputs):
+        wandb.log({"val_loss": outputs[0][0], "val_acc": outputs[0][1]})
+
 
     def test_step(
         self,
