@@ -12,8 +12,7 @@ import pandas as pd
 #     [1, 2, 1, 2],
 # ]
 TRAIN_DATA = pd.read_csv("../datas/train_zs_30.csv").values.tolist()
-TRAIN_DATA.extend(pd.read_csv("../datas/train_extended_zs_70.csv").values.tolist()[:-20])
-VALID_DATA = pd.read_csv("../datas/train_extended_zs_70.csv").values.tolist()[-20:]
+TRAIN_DATA.extend(pd.read_csv("../datas/train_extended_zs_70.csv").values.tolist())
 
 # TEST_DATA = [
 #     [0, 1, 0, 1],
@@ -50,3 +49,5 @@ def tidyup_receiver_output(n_attributes, n_values, receiver_output)->npt.NDArray
         receiver_output_array[output_id, :] = reshaped_output_i.argmax(axis=1)
 
     return receiver_output_array
+
+VALID_DATA = TRAIN_DATA ## 仮コード

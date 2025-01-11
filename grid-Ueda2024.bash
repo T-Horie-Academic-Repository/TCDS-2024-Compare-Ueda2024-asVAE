@@ -1,12 +1,17 @@
-for j in 512; do # batch_size
+for j in 1024; do # batch_size
 for k in 3 5 9 17; do # vocab_size
-for l in 0.00001; do # learning rate
-for i in 10 20 30; do # 3 seeds
+for l in 1e-5; do # learning rate
+for i in {0..9}; do # 3 seeds
+if [ $k -eq 3 ]; then
+    iter=3000
+else
+    iter=1500
+fi
 /root/.local/bin/poetry run python -m emecom_gen.zoo.attval_signaling_game.train \
     --vocab_size $k \
     --max_len 32 \
     --fix_message_length false \
-    --n_epochs 20000 \
+    --n_epochs $iter \
     --batch_size $j \
     --sender_cell_type gru \
     --sender_hidden_size 512 \
@@ -24,7 +29,7 @@ for i in 10 20 30; do # 3 seeds
     --n_attributes 4 \
     --n_values 4 \
     --random_seed $i \
-    --exp_id 0 \
+    --exp_id $i \
     --sender_lr $l \
     --receiver_lr $l
 done
